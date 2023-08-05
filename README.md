@@ -1,1 +1,2 @@
 # ReduxPractice
+tablet pc
