@@ -1,0 +1,5 @@
+# 使用するベースイメージ
+FROM nginx:alpine
+
+# Nginxの設定ファイルをコピー
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
