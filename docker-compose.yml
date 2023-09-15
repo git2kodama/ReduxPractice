@@ -8,6 +8,9 @@ services:
       - ./laravel-src:/var/www/html 
     ports:
       - "9000:9000"
+    networks:
+     - mysql_bridge
+
   nginx:
       build:
         context: ./docker/nginx
@@ -19,4 +22,46 @@ services:
         - "8080:80"
       depends_on:
         - php
-# MySQLなどの他のサービスもここに定義します
+
+  mysql:
+    container_name: mysql_host
+    build: 
+      context: ./docker/mysql
+      dockerfile: Dockerfile-mysql
+    command: --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: testdb
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: user_name
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d # 定義どおりにテーブル作成
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d # MySQLの基本設定(文字化け対策)
+#      - ./docker/mysql/mysql_data:/var/lib/mysql
+    restart: always
+    platform: linux/amd64
+    networks:
+      - mysql_bridge
+
+  phpmyadmin:
+    container_name: phpmyadmin_host
+    depends_on:
+      - mysql
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8090:80" #localhost:8090 で phpMyAdmin にアクセスできます
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: mysql_host
+      PMA_USER: user_name
+      PMA_PASSWORD: password
+    networks:
+      - mysql_bridge
+
+# コンテナ間で通信を行うためのネットワークブリッジ
+networks:
+  mysql_bridge:
+    driver: bridge
